@@ -138,3 +138,52 @@ input[type="checkbox"] {
 .export span {
   font-weight: 500;
 }
+
+/* =====================================================
+   PAPER GRID (STRUCTURAL ONLY)
+   ===================================================== */
+
+.paper-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.paper-row {
+  display: grid;
+  gap: 2px;
+  align-items: stretch;
+}
+
+.paper-cell {
+  border: 1px solid #e0e0e0;
+  background: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  aspect-ratio: 1 / 1;
+
+  font-size: 16px;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* =====================================================
+   STATS BLOCK
+   ===================================================== */
+
+   .stats {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  background: #fafafa;
+  font-size: 14px;
+}
+
+.stats .bad {
+  font-weight: 700;
+}
