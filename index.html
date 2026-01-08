@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wongoji Character Counter</title>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <main class="page">
+
+    <!-- 1. CONTROLS -->
+    <section class="block controls">
+      <h1>Wongoji Character Counter</h1>
+
+      <div class="row">
+        <span class="label">Line length</span>
+        <button data-width="20">20</button>
+        <button data-width="25">25</button>
+        <label class="inline">
+          other
+          <input type="number" min="1" step="1" />
+        </label>
+      </div>
+
+      <div class="row">
+        <label class="inline">
+          <input type="checkbox" />
+          Goal range
+        </label>
+
+        <label class="inline">
+          min
+          <input type="number" min="0" />
+        </label>
+
+        <label class="inline">
+          max
+          <input type="number" min="1" />
+        </label>
+      </div>
+    </section>
+
+    <!-- 2. TEXT INPUT -->
+    <section class="block input">
+      <textarea
+        placeholder="Type or paste your text here"
+        rows="4"
+      ></textarea>
+    </section>
+
+    <!-- 3. PAPER PREVIEW -->
+    <section class="block paper">
+      <!-- grid will be rendered here -->
+      <div class="paper-inner">
+        <!-- empty preview for now -->
+      </div>
+    </section>
+
+    <!-- 4. EXPORT -->
+    <section class="block export">
+      <span>Export paper as</span>
+      <button>PDF</button>
+      <button>Image</button>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
