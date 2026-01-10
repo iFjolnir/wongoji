@@ -248,7 +248,29 @@ function renderPaper({ cells, columns, rows }) {
       row.appendChild(cell);
     }
 
-    paper.appendChild(row);
+paper.appendChild(row);
+
+// insert gutter after each character row
+const gutter = document.createElement("div");
+gutter.className = "paper-row gutter";
+
+// COUNTER LOGIC
+const boxesPerRow = currentColumns;
+const rowsPer100 = 100 / boxesPerRow;
+
+// only if it divides cleanly (20 → 5, 25 → 4)
+if (Number.isInteger(rowsPer100)) {
+  const rowIndex = r + 1; // 1-based character row index
+  if (rowIndex % rowsPer100 === 0) {
+    const counter = document.createElement("div");
+    counter.className = "gutter-counter";
+    counter.textContent = String(rowIndex * boxesPerRow);
+    gutter.appendChild(counter);
+  }
+}
+
+paper.appendChild(gutter);
+
   }
 }
 
