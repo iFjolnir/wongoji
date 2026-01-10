@@ -146,31 +146,63 @@ input[type="checkbox"] {
 .paper-inner {
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 
 .paper-row {
   display: grid;
-  gap: 2px;
+  gap: 0;
   align-items: stretch;
+
+  border-top: 1px solid #e0e0e0;
+  border-bottom: none;
 }
 
-.paper-cell {
-  border: 1px solid #e0e0e0;
-  background: #fff;
 
+
+.paper-cell {
+  border-right: 1px solid #e0e0e0;
+
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
 
-  aspect-ratio: 1 / 1;
-
-  font-size: 16px;
-  line-height: 1;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.paper-row.gutter {
+  display: block;
+  position: relative;
+
+  width: 100%;
+
+  height: 12px;
+
+  border-top: 1px solid #e0e0e0;
+  border-left: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.gutter-counter {
+  position: absolute;
+  right: 6px;
+  bottom: 1px;
+
+  font-size: 7px;
+  color: #666;
   user-select: none;
 }
+
+.paper-cell:first-child {
+  border-left: 1px solid #e0e0e0;
+}
+
+
+.paper-row:last-child {
+  border-bottom: 1px solid #e0e0e0;
+}
+
 
 /* =====================================================
    STATS BLOCK
