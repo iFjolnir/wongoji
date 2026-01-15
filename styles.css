@@ -205,9 +205,10 @@ input[type="checkbox"] {
 }
 
 .paper-cell.overflow {
-  background-color: rgba(220, 50, 50, 0.15);
-  color: #b00000;
+  background-color: transparent;
+  color: #ff0000;
 }
+
 
 .paper-row:last-child {
   border-bottom: 1px solid #e0e0e0;
