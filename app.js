@@ -19,9 +19,19 @@ const DEFAULTS = {
   // punctuation that can share the last box if it would otherwise wrap
   shareablePunct: new Set([".", ",", "?", "!", ":", ";", "…", ")", "]", "”", "’", "」", "』", "》"]),
 
-  // special 2-box tokens
-  twoBoxTokens: new Set(["……", "―"]),
+  // special 2-box tokens (non-ellipsis only)
+  twoBoxTokens: new Set(["―"]),
+
 };
+
+const LEFT_ALIGN_PUNCT = new Set([
+  ".", ",", ":", ";", "·", "、", "。", "，"
+]);
+
+const CENTER_PUNCT_EXCEPTIONS = new Set([
+  "―", "–", "…", "……", "?", "!"
+]);
+
 
 function normalizeText(s) {
   return (s || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
@@ -29,17 +39,40 @@ function normalizeText(s) {
 
 function tokenizeParagraph(para) {
   const tokens = [];
-  for (let i = 0; i < para.length; i++) {
-    // 6-dot ellipsis token "……" (treated as one token)
-    if (para.slice(i, i + 2) === "……") {
-      tokens.push("……");
+  let i = 0;
+
+  while (i < para.length) {
+    // Normalize three dots into TWO ellipsis boxes
+    if (para.slice(i, i + 3) === "...") {
+      tokens.push("...");
+      tokens.push("...");
+      i += 3;
+      continue;
+    }
+
+    // If user pasted a Unicode ellipsis variant, normalize it too
+    if (para.slice(i, i + 1) === "…") {
+      tokens.push("...");
+      tokens.push("...");
       i += 1;
       continue;
     }
+
+    // If someone pasted the six-dot form, normalize as well
+    if (para.slice(i, i + 2) === "……") {
+      tokens.push("...");
+      tokens.push("...");
+      i += 2;
+      continue;
+    }
+
     tokens.push(para[i]);
+    i += 1;
   }
+
   return tokens;
 }
+
 
 function packDigits(tokens, digitsPerBox = 2) {
   const out = [];
@@ -251,7 +284,17 @@ function renderPaper({ cells, columns, rows, maxChars }) {
 
       if (cellData.used && cellData.char) {
         cell.textContent = cellData.char;
+      
+        // left-align basic punctuation (except allowed centered ones)
+        if (
+          cellData.char.length === 1 &&
+          LEFT_ALIGN_PUNCT.has(cellData.char) &&
+          !CENTER_PUNCT_EXCEPTIONS.has(cellData.char)
+        ) {
+          cell.classList.add("punct-left");
+        }
       }
+
 
       if (maxChars && paperIndex > maxChars) {
         cell.classList.add("overflow");
@@ -370,3 +413,62 @@ maxInput.addEventListener("input", updatePreview);
 
 // initial
 updatePreview();
+
+/* =========================
+   EXPORT — IMAGE (PNG)
+   ========================= */
+
+const exportImageBtn = document.querySelector("#export-image");
+
+// 🔧 MANUAL EXPORT FONT SIZE (tweak this)
+const EXPORT_FONT_SIZE_PX = 20; // CHANGE THIS VALUE TO ADJUST EXPORT SIZE
+
+exportImageBtn.addEventListener("click", async () => {
+  const originalPaper = document.querySelector(".paper-inner");
+  if (!originalPaper) return;
+
+  // clone grid
+  const paperClone = originalPaper.cloneNode(true);
+
+  // inject export-only font size override
+  const styleOverride = document.createElement("style");
+  styleOverride.textContent = `
+    .paper-cell {
+      font-size: ${EXPORT_FONT_SIZE_PX}px !important;
+      line-height: 1 !important;
+    }
+  `;
+
+  // fixed-width export wrapper (virtual paper)
+  const wrapper = document.createElement("div");
+  wrapper.style.width = "1240px";      // fixed export width
+  wrapper.style.padding = "32px";      // paper margins
+  wrapper.style.background = "#fff";
+  wrapper.style.boxSizing = "border-box";
+
+  wrapper.appendChild(styleOverride);
+  wrapper.appendChild(paperClone);
+
+  // render off-screen
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  wrapper.style.top = "0";
+  document.body.appendChild(wrapper);
+
+  const canvas = await html2canvas(wrapper, {
+    backgroundColor: "#fff",
+    useCORS: true,
+  });
+
+  document.body.removeChild(wrapper);
+
+  const dataURL = canvas.toDataURL("image/png");
+
+  const link = document.createElement("a");
+  link.href = dataURL;
+  link.download = "wongoji-paper.png";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+});
+
