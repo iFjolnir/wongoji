@@ -169,7 +169,13 @@ input[type="checkbox"] {
 
   white-space: nowrap;
   overflow: hidden;
+
+  /* ✅ responsive text sizing inside small squares */
+  font-size: clamp(10px, 2.4vw, 14px);
+  line-height: 1;
+  padding: 1px;
 }
+
 
 .paper-row.gutter {
   display: block;
@@ -198,6 +204,10 @@ input[type="checkbox"] {
   border-left: 1px solid #e0e0e0;
 }
 
+.paper-cell.overflow {
+  background-color: rgba(220, 50, 50, 0.15);
+  color: #b00000;
+}
 
 .paper-row:last-child {
   border-bottom: 1px solid #e0e0e0;
