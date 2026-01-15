@@ -23,7 +23,6 @@ body {
   --ui-border: #F4E7E0;
   --ui-block: #FAF9F5;
 
-
   /* Accent */
   --accent: #d97757;
   --accent-soft: #d9785748;
@@ -39,8 +38,8 @@ body {
 body {
   font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   line-height: 1.4;
-  background: var(--ui-bg);
-  color: var(--ui-text);
+  background: var(--ui-bg); /* App background */
+  color: var(--ui-text); /* Default text color */
 }
 
 
@@ -73,7 +72,7 @@ body {
   margin-bottom: 18px;
   padding: 16px;
   border-radius: var(--r-md);
-  border: 1px solid #f4e7e082;
+  border: 1px solid #f4e7e082; /* Card outline */
   background: transparent;
 }
 
@@ -98,7 +97,7 @@ body {
   font-weight: 600;
 }
 
-/* Layout rows */
+/* Layout rows for control groups */
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -119,7 +118,7 @@ body {
 }
 
 /* =====================================================
-   Unified control base
+   FORM CONTROLS (shared base)
    ===================================================== */
 
 button,
@@ -143,7 +142,7 @@ textarea {
     transform 60ms ease;
 }
 
-/* Contextual sizing — does NOT affect export detail fields */
+/* Contextual sizing (controls area only) */
 .controls input[type="number"] {
   width: 72px;
 }
@@ -216,7 +215,7 @@ textarea:not(:placeholder-shown) {
 
 
 /* =====================================================
-   TEXT INPUT
+   TEXT INPUT (textarea card)
    ===================================================== */
 
 .input textarea {
@@ -231,6 +230,7 @@ textarea:not(:placeholder-shown) {
   color: var(--ui-text);
 }
 
+/* Shared focus ring for keyboard navigation */
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible {
@@ -244,11 +244,11 @@ textarea:focus-visible {
 
 
 /* =====================================================
-   PAPER PREVIEW (NO WIDTH LOGIC YET)
+   PAPER PREVIEW (rendered grid canvas)
    ===================================================== */
 
 .paper {
-  border: 1px solid #ccc;
+  border: 1px solid #ccc; /* Outer preview boundary */
   padding: 16px;
 }
 
@@ -325,7 +325,6 @@ textarea:focus-visible {
   display: grid;
   gap: 0;
   align-items: stretch;
-
   border-top: 1px solid #e0e0e0;
   border-bottom: none;
 }
@@ -334,16 +333,13 @@ textarea:focus-visible {
 
 .paper-cell {
   border-right: 1px solid #e0e0e0;
-
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-
   white-space: nowrap;
   overflow: hidden;
-
-  /* ✅ responsive text sizing inside small squares */
+  /* Responsive text sizing inside small squares */
   font-size: clamp(10px, 2.4vw, 14px);
   line-height: 1;
   padding: 1px;
@@ -353,11 +349,8 @@ textarea:focus-visible {
 .paper-row.gutter {
   display: block;
   position: relative;
-
   width: 100%;
-
   height: 12px;
-
   border-top: 1px solid #e0e0e0;
   border-left: 1px solid #e0e0e0;
   border-right: 1px solid #e0e0e0;
@@ -367,7 +360,6 @@ textarea:focus-visible {
   position: absolute;
   right: 6px;
   bottom: 1px;
-
   font-size: 7px;
   color: #666;
   user-select: none;
@@ -401,7 +393,7 @@ textarea:focus-visible {
    STATS BLOCK
    ===================================================== */
 
-   .stats {
+.stats {
   margin-top: 10px;
   padding: 10px 12px;
   border-radius: var(--r-sm);
