@@ -255,7 +255,7 @@ textarea:focus-visible {
 .paper-inner {
   width: 100%;
   overflow: hidden;
-  background: #fff;
+  background: transparent;
   min-height: 120px;
 }
 
@@ -326,14 +326,14 @@ textarea:focus-visible {
   gap: 0;
   align-items: stretch;
 
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #f4e7e0dd;
   border-bottom: none;
 }
 
 
 
 .paper-cell {
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid #f4e7e0dd;
 
   aspect-ratio: 1 / 1;
   display: flex;
@@ -358,9 +358,9 @@ textarea:focus-visible {
 
   height: 12px;
 
-  border-top: 1px solid #e0e0e0;
-  border-left: 1px solid #e0e0e0;
-  border-right: 1px solid #e0e0e0;
+  border-top: 1px solid #f4e7e0dd;
+  border-left: 1px solid #f4e7e0dd;
+  border-right: 1px solid #f4e7e0dd;
 }
 
 .gutter-counter {
@@ -369,17 +369,17 @@ textarea:focus-visible {
   bottom: 1px;
 
   font-size: 7px;
-  color: #666;
+  color: #d97857a2;
   user-select: none;
 }
 
 .paper-cell:first-child {
-  border-left: 1px solid #e0e0e0;
+  border-left: 1px solid #f4e7e0dd;
 }
 
 .paper-cell.overflow {
   background-color: transparent;
-  color: #ff0000;
+  color: #d97757;
 }
 
 .paper-cell.punct-left {
@@ -389,7 +389,7 @@ textarea:focus-visible {
 
 
 .paper-row:last-child {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #f4e7e0dd;
 }
 
 
