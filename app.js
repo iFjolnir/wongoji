@@ -182,12 +182,15 @@ function layout(text, opts = {}) {
     // normal token
     pushCell(makeCell(token, true));
 
-    // After ? or !: ensure exactly ONE blank box,
-    // but do not allow user-typed extra spaces to create MORE blanks
-    if (o.requireBlankAfter.has(token)) {
-      pushUsedBlank();
-      return;
-    }
+// After ? or !: ensure exactly ONE blank box
+// only if the user did NOT already type one
+if (o.requireBlankAfter.has(token)) {
+  if (nextToken !== " " && nextToken !== "\t") {
+    pushUsedBlank();
+  }
+  return;
+}
+
   }
 
   for (let p = 0; p < paras.length; p++) {
