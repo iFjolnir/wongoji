@@ -22,6 +22,10 @@ body {
 }
 
 
+
+
+
+
 /* =====================================================
    PAGE CONTAINER (THE ONLY WIDTH AUTHORITY)
    ===================================================== */
@@ -33,6 +37,10 @@ body {
 }
 
 
+
+
+
+
 /* =====================================================
    GENERIC BLOCKS (VERTICAL FLOW ONLY)
    ===================================================== */
@@ -41,6 +49,10 @@ body {
   width: 100%;
   margin-bottom: 24px;
 }
+
+
+
+
 
 
 /* =====================================================
@@ -94,6 +106,10 @@ input[type="checkbox"] {
 }
 
 
+
+
+
+
 /* =====================================================
    TEXT INPUT
    ===================================================== */
@@ -106,6 +122,10 @@ input[type="checkbox"] {
   font-size: 15px;
   border: 1px solid #999;
 }
+
+
+
+
 
 
 /* =====================================================
@@ -125,19 +145,58 @@ input[type="checkbox"] {
 }
 
 
+
+
+
+
 /* =====================================================
    EXPORT
    ===================================================== */
 
 .export {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 12px;
 }
+
 
 .export span {
   font-weight: 500;
 }
+
+.export-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.export-details {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.export-details.hidden {
+  display: none;
+}
+
+.export-details input {
+  max-width: 280px;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.export-disclaimer {
+  font-size: 12px;
+  color: #666;
+}
+
+
+
+
+
 
 /* =====================================================
    PAPER GRID (STRUCTURAL ONLY)
@@ -218,6 +277,10 @@ input[type="checkbox"] {
 .paper-row:last-child {
   border-bottom: 1px solid #e0e0e0;
 }
+
+
+
+
 
 
 /* =====================================================
