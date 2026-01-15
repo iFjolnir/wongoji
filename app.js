@@ -231,9 +231,11 @@ const rangeToggle = document.querySelector('.controls input[type="checkbox"]');
 let currentColumns = 20;
 const MIN_ROWS = 3;
 
-function renderPaper({ cells, columns, rows }) {
+function renderPaper({ cells, columns, rows, maxChars }) {
   paper.innerHTML = "";
-  let index = 0;
+
+  let index = 0;        // index into cells[]
+  let paperIndex = 0;  // paper boxes consumed (this is the key)
 
   for (let r = 0; r < rows; r++) {
     const row = document.createElement("div");
@@ -244,36 +246,44 @@ function renderPaper({ cells, columns, rows }) {
       const cellData = cells[index] ?? { char: "", used: false };
       const cell = document.createElement("div");
       cell.className = "paper-cell";
-      if (cellData.used && cellData.char) cell.textContent = cellData.char;
+
+      paperIndex++;
+
+      if (cellData.used && cellData.char) {
+        cell.textContent = cellData.char;
+      }
+
+      if (maxChars && paperIndex > maxChars) {
+        cell.classList.add("overflow");
+      }
+
       index++;
       row.appendChild(cell);
     }
 
-paper.appendChild(row);
+    paper.appendChild(row);
 
-// insert gutter after each character row
-const gutter = document.createElement("div");
-gutter.className = "paper-row gutter";
+    // ----- gutter row -----
+    const gutter = document.createElement("div");
+    gutter.className = "paper-row gutter";
 
-// COUNTER LOGIC
-const boxesPerRow = currentColumns;
-const rowsPer100 = 100 / boxesPerRow;
+    const boxesPerRow = columns;
+    const rowsPer100 = 100 / boxesPerRow;
 
-// only if it divides cleanly (20 → 5, 25 → 4)
-if (Number.isInteger(rowsPer100)) {
-  const rowIndex = r + 1; // 1-based character row index
-  if (rowIndex % rowsPer100 === 0) {
-    const counter = document.createElement("div");
-    counter.className = "gutter-counter";
-    counter.textContent = String(rowIndex * boxesPerRow);
-    gutter.appendChild(counter);
+    if (Number.isInteger(rowsPer100)) {
+      const rowIndex = r + 1;
+      if (rowIndex % rowsPer100 === 0) {
+        const counter = document.createElement("div");
+        counter.className = "gutter-counter";
+        counter.textContent = String(rowIndex * boxesPerRow);
+        gutter.appendChild(counter);
+      }
+    }
+
+    paper.appendChild(gutter);
   }
 }
 
-paper.appendChild(gutter);
-
-  }
-}
 
 function updateStats({ usedCount, consumedCount, maxChars, overflow }) {
   if (!stats) return;
@@ -319,6 +329,7 @@ function updatePreview() {
     cells: result.cells,
     columns: currentColumns,
     rows,
+    maxChars,
   });
 
   updateStats({
