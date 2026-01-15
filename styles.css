@@ -14,12 +14,35 @@ body {
   padding: 0;
 }
 
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  line-height: 1.4;
-  background: #fff;
-  color: #000;
+:root {
+  /* UI palette */
+  --ui-bg: #FAF9F5;
+  --ui-card: transparent;
+  --ui-text: #111;
+  --ui-muted: #666;
+  --ui-border: #F4E7E0;
+  --ui-block: #FAF9F5;
+
+
+  /* Accent */
+  --accent: #d97757;
+  --accent-soft: #d9785748;
+
+  /* Radii + spacing */
+  --r-sm: 8px;
+  --r-md: 12px;
+
+  /* Focus ring */
+  --focus: #d97757;
 }
+
+body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.4;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+}
+
 
 
 
@@ -47,8 +70,18 @@ body {
 
 .block {
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
+  padding: 16px;
+  border-radius: var(--r-md);
+  border: 1px solid #f4e7e082;
+  background: transparent;
 }
+
+.block.paper {
+  border: none;
+  padding: 0;
+}
+
 
 
 
@@ -62,8 +95,10 @@ body {
 .controls h1 {
   margin: 0 0 16px;
   font-size: 24px;
+  font-weight: 600;
 }
 
+/* Layout rows */
 .row {
   display: flex;
   flex-wrap: wrap;
@@ -72,38 +107,108 @@ body {
   margin-bottom: 12px;
 }
 
-.label {
-  font-weight: 600;
-  margin-right: 8px;
-}
-
 .inline {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-button {
-  padding: 6px 12px;
+.label {
+  font-weight: 500;
+  color: var(--ui-text);
+}
+
+/* =====================================================
+   Unified control base
+   ===================================================== */
+
+button,
+input[type="text"],
+input[type="number"],
+input[type="date"],
+textarea {
+  font-family: inherit;
   font-size: 14px;
-  border: 1px solid #999;
-  background: #fff;
+  color: var(--ui-text);
+
+  background: rgba(0,0,0,0.025);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 60ms ease;
+}
+
+/* Contextual sizing — does NOT affect export detail fields */
+.controls input[type="number"] {
+  width: 72px;
+}
+
+.controls input[type="text"] {
+  min-width: 160px;
+}
+
+
+/* =====================================================
+   Buttons
+   ===================================================== */
+
+button {
   cursor: pointer;
 }
 
-button:active {
-  background: #eee;
+button:hover {
+  background: #eed5ca89;
+  color: #D97757;
 }
 
-input[type="number"] {
-  width: 72px;
-  padding: 6px;
-  font-size: 14px;
+button:active {
+  transform: translateY(1px);
 }
+
+/* Selected / active buttons */
+button.is-active {
+  background: #D97757;
+  color: #ffffff;
+}
+
+/* =====================================================
+   Inputs
+   ===================================================== */
 
 input[type="checkbox"] {
   transform: translateY(1px);
 }
+
+/* Focused (but not filled yet) */
+input:focus-visible,
+textarea:focus-visible {
+  background: #fff;
+  border-color: var(--ui-border);
+  outline: none;
+}
+
+/* Filled-in inputs */
+input:not(:placeholder-shown),
+textarea:not(:placeholder-shown) {
+  background: #fff;
+  border: 1px solid var(--ui-border);
+}
+
+/* Inactive (disabled-by-logic, not by HTML) */
+.is-inactive {
+  background: rgba(0,0,0,0.015);
+  color: #9a9a9a;
+  border-color: transparent;
+  pointer-events: none;
+}
+
+
+
 
 
 
@@ -116,11 +221,21 @@ input[type="checkbox"] {
 
 .input textarea {
   width: 100%;
-  min-height: 120px;
+  min-height: 140px;
   resize: vertical;
   padding: 12px;
   font-size: 15px;
-  border: 1px solid #999;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--r-md);
+  background: #fff;
+  color: var(--ui-text);
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 1px solid var(--focus);
+  outline-offset: 0px;
 }
 
 
@@ -183,10 +298,9 @@ input[type="checkbox"] {
 }
 
 .export-details input {
-  max-width: 280px;
-  padding: 6px 8px;
-  font-size: 14px;
+  max-width: 320px;
 }
+
 
 .export-disclaimer {
   font-size: 12px;
@@ -290,8 +404,10 @@ input[type="checkbox"] {
    .stats {
   margin-top: 10px;
   padding: 10px 12px;
-  border: 1px solid #ddd;
-  background: #fafafa;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--ui-border);
+  background: rgba(255,255,255,0.6);
+  color: var(--ui-text);
   font-size: 14px;
 }
 
