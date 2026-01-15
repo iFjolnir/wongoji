@@ -209,6 +209,11 @@ input[type="checkbox"] {
   color: #ff0000;
 }
 
+.paper-cell.punct-left {
+  justify-content: flex-start;
+  padding-left: 3px;
+}
+
 
 .paper-row:last-child {
   border-bottom: 1px solid #e0e0e0;
