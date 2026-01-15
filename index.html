@@ -11,6 +11,10 @@
 <body>
   <main class="page">
 
+
+
+
+    
     <!-- 1. CONTROLS -->
     <section class="block controls">
       <h1>Wongoji Character Counter</h1>
@@ -46,6 +50,10 @@
 
     </section>
 
+
+
+
+
     <!-- 2. TEXT INPUT -->
     <section class="block input">
       <textarea
@@ -53,6 +61,10 @@
         rows="4"
       ></textarea>
     </section>
+
+
+
+
 
     <!-- 3. PAPER PREVIEW -->
     <section class="block paper">
@@ -62,12 +74,42 @@
       </div>
     </section>
 
+
+
+
+
     <!-- 4. EXPORT -->
-    <section class="block export">
+      <section class="block export">
+    <div class="export-row">
       <span>Export paper as</span>
-      <button>PDF</button>
+      <button id="export-pdf">PDF</button>
       <button id="export-image">Image</button>
-    </section>
+    </div>
+
+    <div class="export-details hidden" id="export-details">
+      <div class="export-disclaimer">
+        (Optional) Add submission details to exported file
+      </div>
+
+      <input
+        type="text"
+        id="export-title"
+        placeholder="Title"
+      />
+
+      <input
+        type="text"
+        id="export-name"
+        placeholder="Name"
+      />
+
+      <input
+        type="text"
+        id="export-date"
+        placeholder="Date"
+      />
+    </div>
+  </section>
 
   </main>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
