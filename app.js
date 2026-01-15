@@ -1,5 +1,10 @@
 // app.js — stable port: old wongoji logic + new UI renderer
 
+
+
+
+
+
 /* =========================
    DEFAULTS + HELPERS (from old version)
    ========================= */
@@ -102,9 +107,14 @@ function makeCell(char = "", used = false) {
   return { char, used };
 }
 
-/* =========================
+
+
+
+
+
+/* ===========================================================================
    LAYOUT ENGINE (ported)
-   ========================= */
+   =========================================================================== */
 
 function layout(text, opts = {}) {
   const o = { ...DEFAULTS, ...opts };
@@ -245,9 +255,14 @@ if (o.requireBlankAfter.has(token)) {
    return { cells, usedCount, consumedCount, sheetCount, width };
 }
 
-/* =========================
+
+
+
+
+
+/* ===========================================================================
    UI + RENDERING
-   ========================= */
+   =========================================================================== */
 
 const paper = document.querySelector(".paper-inner");
 const textarea = document.querySelector(".input textarea");
@@ -386,9 +401,14 @@ function updatePreview() {
   });
 }
 
-/* =========================
+
+
+
+
+
+/* ===========================================================================
    EVENTS
-   ========================= */
+   =========================================================================== */
 
 btn20.addEventListener("click", () => {
   currentColumns = 20;
@@ -417,23 +437,58 @@ maxInput.addEventListener("input", updatePreview);
 // initial
 updatePreview();
 
-/* =========================
+
+
+
+
+
+/* ===========================================================================
    EXPORT — IMAGE (PNG)
-   ========================= */
+   ======================================================================== */
 
 const exportImageBtn = document.querySelector("#export-image");
+const exportDetails = document.querySelector("#export-details");
+const exportPdfBtn = document.querySelector("#export-pdf");
 
-// 🔧 MANUAL EXPORT FONT SIZE (tweak this)
-const EXPORT_FONT_SIZE_PX = 20; // CHANGE THIS VALUE TO ADJUST EXPORT SIZE
+exportPdfBtn?.addEventListener("click", () => {
+  exportDetails?.classList.remove("hidden");
+});
+
+
+// 🔧 TEMP: header content (can be wired to UI later)
+function getExportHeaderData() {
+  return {
+    title: document.querySelector("#export-title")?.value.trim(),
+    name: document.querySelector("#export-name")?.value.trim(),
+    date: document.querySelector("#export-date")?.value.trim(),
+  };
+}
+
+
+// 🔧 TEMP: export font size
+const EXPORT_FONT_SIZE_PX = 15;
 
 exportImageBtn.addEventListener("click", async () => {
+  // First click: reveal optional fields, don't export yet
+  if (exportDetails && exportDetails.classList.contains("hidden")) {
+    exportDetails.classList.remove("hidden");
+    return;
+  }
+
   const originalPaper = document.querySelector(".paper-inner");
   if (!originalPaper) return;
 
-  // clone grid
+
   const paperClone = originalPaper.cloneNode(true);
 
-  // inject export-only font size override
+  // export wrapper (fixed physical width)
+  const wrapper = document.createElement("div");
+  wrapper.style.width = "1240px";
+  wrapper.style.padding = "32px";
+  wrapper.style.background = "#fff";
+  wrapper.style.boxSizing = "border-box";
+
+  // export-only font override
   const styleOverride = document.createElement("style");
   styleOverride.textContent = `
     .paper-cell {
@@ -442,14 +497,46 @@ exportImageBtn.addEventListener("click", async () => {
     }
   `;
 
-  // fixed-width export wrapper (virtual paper)
-  const wrapper = document.createElement("div");
-  wrapper.style.width = "1240px";      // fixed export width
-  wrapper.style.padding = "32px";      // paper margins
-  wrapper.style.background = "#fff";
-  wrapper.style.boxSizing = "border-box";
-
   wrapper.appendChild(styleOverride);
+
+  // ----- HEADER (optional) -----
+  const { title, name, date } = getExportHeaderData();
+  const hasHeader = title || name || date;
+
+  if (hasHeader) {
+    const header = document.createElement("div");
+    header.style.display = "grid";
+    header.style.gridTemplateColumns = "12fr 5fr 3fr";
+    header.style.alignItems = "end";
+    header.style.marginBottom = "40px";
+    header.style.fontSize = "20px";
+    header.style.fontWeight = "700";
+
+
+    const titleEl = document.createElement("div");
+    titleEl.textContent = title || "";
+    titleEl.style.textAlign = "left";
+
+    const nameEl = document.createElement("div");
+    nameEl.textContent = name || "";
+    nameEl.style.textAlign = "right";
+
+    const dateEl = document.createElement("div");
+    dateEl.textContent = date || "";
+    dateEl.style.textAlign = "right";
+
+    nameEl.style.fontWeight = "300";
+    dateEl.style.fontWeight = "300";
+
+
+    header.appendChild(titleEl);
+    header.appendChild(nameEl);
+    header.appendChild(dateEl);
+
+    wrapper.appendChild(header);
+  }
+
+  // ----- PAPER GRID -----
   wrapper.appendChild(paperClone);
 
   // render off-screen
@@ -474,4 +561,5 @@ exportImageBtn.addEventListener("click", async () => {
   link.click();
   document.body.removeChild(link);
 });
+
 
