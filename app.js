@@ -205,7 +205,8 @@ function layout(text, opts = {}) {
   const sheetCount =
     lastUsedIndex === 0 ? 0 : Math.ceil(lastUsedIndex / width) * width;
 
-  return { cells, usedCount, sheetCount, width };
+   const consumedCount = lastUsedIndex; // ✅ boxes consumed on paper (includes wasted padding)
+   return { cells, usedCount, consumedCount, sheetCount, width };
 }
 
 /* =========================
@@ -274,17 +275,19 @@ paper.appendChild(gutter);
   }
 }
 
-function updateStats({ usedCount, maxChars, overflow }) {
+function updateStats({ usedCount, consumedCount, maxChars, overflow }) {
   if (!stats) return;
 
-  const maxPart =
-    maxChars ? ` / ${maxChars}` : "";
+  const maxPart = maxChars ? ` / ${maxChars}` : "";
 
   const overflowPart =
     overflow > 0 ? ` — overflow: <span class="bad">${overflow}</span>` : "";
 
-  stats.innerHTML = `Boxes used: <strong>${usedCount}</strong>${maxPart}${overflowPart}`;
+  stats.innerHTML =
+    `Boxes filled: <strong>${usedCount}</strong>` +
+    ` — Boxes consumed: <strong>${consumedCount}</strong>${maxPart}${overflowPart}`;
 }
+
 
 function updatePreview() {
   const text = textarea.value;
@@ -310,7 +313,7 @@ function updatePreview() {
 
   const rows = sheetCountToRender / currentColumns;
 
-  const overflow = maxChars ? Math.max(0, result.usedCount - maxChars) : 0;
+  const overflow = maxChars ? Math.max(0, result.consumedCount - maxChars) : 0;
 
   renderPaper({
     cells: result.cells,
@@ -320,6 +323,7 @@ function updatePreview() {
 
   updateStats({
     usedCount: result.usedCount,
+    consumedCount: result.consumedCount,
     maxChars,
     overflow,
   });
