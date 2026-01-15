@@ -441,6 +441,76 @@ updatePreview();
 
 
 
+/* ===========================================================================
+   EXPORT — RENDER WRAPPER
+   ======================================================================== */
+
+function buildExportWrapper() {
+  const originalPaper = document.querySelector(".paper-inner");
+  if (!originalPaper) return null;
+
+  const paperClone = originalPaper.cloneNode(true);
+
+  const wrapper = document.createElement("div");
+  wrapper.style.width = "1240px";
+  wrapper.style.padding = "32px";
+  wrapper.style.background = "#fff";
+  wrapper.style.boxSizing = "border-box";
+
+  const styleOverride = document.createElement("style");
+  styleOverride.textContent = `
+    .paper-cell {
+      font-size: ${EXPORT_FONT_SIZE_PX}px !important;
+      line-height: 1 !important;
+    }
+  `;
+  wrapper.appendChild(styleOverride);
+
+  const { title, name, date } = getExportHeaderData();
+  if (title || name || date) {
+    const header = document.createElement("div");
+    header.style.display = "grid";
+    header.style.gridTemplateColumns = "12fr 5fr 3fr";
+    header.style.alignItems = "end";
+    header.style.marginBottom = "40px";
+    header.style.fontSize = "20px";
+    header.style.fontWeight = "700";
+
+    const titleEl = document.createElement("div");
+    titleEl.textContent = title || "";
+    titleEl.style.textAlign = "left";
+
+    const nameEl = document.createElement("div");
+    nameEl.textContent = name || "";
+    nameEl.style.textAlign = "right";
+    nameEl.style.fontWeight = "300";
+
+    const dateEl = document.createElement("div");
+    dateEl.textContent = date || "";
+    dateEl.style.textAlign = "right";
+    dateEl.style.fontWeight = "300";
+
+    header.appendChild(titleEl);
+    header.appendChild(nameEl);
+    header.appendChild(dateEl);
+
+    wrapper.appendChild(header);
+  }
+
+  wrapper.appendChild(paperClone);
+
+  wrapper.style.position = "fixed";
+  wrapper.style.left = "-9999px";
+  wrapper.style.top = "0";
+  document.body.appendChild(wrapper);
+
+  return wrapper;
+}
+
+
+
+
+
 
 /* ===========================================================================
    EXPORT — IMAGE (PNG)
@@ -450,12 +520,8 @@ const exportImageBtn = document.querySelector("#export-image");
 const exportDetails = document.querySelector("#export-details");
 const exportPdfBtn = document.querySelector("#export-pdf");
 
-exportPdfBtn?.addEventListener("click", () => {
-  exportDetails?.classList.remove("hidden");
-});
 
-
-// 🔧 TEMP: header content (can be wired to UI later)
+// header content
 function getExportHeaderData() {
   return {
     title: document.querySelector("#export-title")?.value.trim(),
@@ -466,84 +532,16 @@ function getExportHeaderData() {
 
 
 // 🔧 TEMP: export font size
-const EXPORT_FONT_SIZE_PX = 15;
+const EXPORT_FONT_SIZE_PX = 20;
 
 exportImageBtn.addEventListener("click", async () => {
-  // First click: reveal optional fields, don't export yet
   if (exportDetails && exportDetails.classList.contains("hidden")) {
     exportDetails.classList.remove("hidden");
     return;
   }
 
-  const originalPaper = document.querySelector(".paper-inner");
-  if (!originalPaper) return;
-
-
-  const paperClone = originalPaper.cloneNode(true);
-
-  // export wrapper (fixed physical width)
-  const wrapper = document.createElement("div");
-  wrapper.style.width = "1240px";
-  wrapper.style.padding = "32px";
-  wrapper.style.background = "#fff";
-  wrapper.style.boxSizing = "border-box";
-
-  // export-only font override
-  const styleOverride = document.createElement("style");
-  styleOverride.textContent = `
-    .paper-cell {
-      font-size: ${EXPORT_FONT_SIZE_PX}px !important;
-      line-height: 1 !important;
-    }
-  `;
-
-  wrapper.appendChild(styleOverride);
-
-  // ----- HEADER (optional) -----
-  const { title, name, date } = getExportHeaderData();
-  const hasHeader = title || name || date;
-
-  if (hasHeader) {
-    const header = document.createElement("div");
-    header.style.display = "grid";
-    header.style.gridTemplateColumns = "12fr 5fr 3fr";
-    header.style.alignItems = "end";
-    header.style.marginBottom = "40px";
-    header.style.fontSize = "20px";
-    header.style.fontWeight = "700";
-
-
-    const titleEl = document.createElement("div");
-    titleEl.textContent = title || "";
-    titleEl.style.textAlign = "left";
-
-    const nameEl = document.createElement("div");
-    nameEl.textContent = name || "";
-    nameEl.style.textAlign = "right";
-
-    const dateEl = document.createElement("div");
-    dateEl.textContent = date || "";
-    dateEl.style.textAlign = "right";
-
-    nameEl.style.fontWeight = "300";
-    dateEl.style.fontWeight = "300";
-
-
-    header.appendChild(titleEl);
-    header.appendChild(nameEl);
-    header.appendChild(dateEl);
-
-    wrapper.appendChild(header);
-  }
-
-  // ----- PAPER GRID -----
-  wrapper.appendChild(paperClone);
-
-  // render off-screen
-  wrapper.style.position = "fixed";
-  wrapper.style.left = "-9999px";
-  wrapper.style.top = "0";
-  document.body.appendChild(wrapper);
+  const wrapper = buildExportWrapper();
+  if (!wrapper) return;
 
   const canvas = await html2canvas(wrapper, {
     backgroundColor: "#fff",
@@ -561,5 +559,76 @@ exportImageBtn.addEventListener("click", async () => {
   link.click();
   document.body.removeChild(link);
 });
+
+
+
+
+
+/* ===========================================================================
+   EXPORT — DOC (PDF)
+   ======================================================================== */
+
+exportPdfBtn.addEventListener("click", async () => {
+  // STEP 1: first click → reveal options ONLY
+  if (exportDetails && exportDetails.classList.contains("hidden")) {
+    exportDetails.classList.remove("hidden");
+    return; // 🔴 CRITICAL: stop here
+  }
+
+  // STEP 2: actual export
+  const wrapper = buildExportWrapper();
+  if (!wrapper) return;
+
+  const canvas = await html2canvas(wrapper, {
+    backgroundColor: "#fff",
+    useCORS: true,
+    scale: 2, // improves PDF clarity
+  });
+
+  document.body.removeChild(wrapper);
+
+  exportCanvasToPdf(canvas);
+});
+
+
+
+
+
+
+
+function exportCanvasToPdf(canvas) {
+  const { jsPDF } = window.jspdf;
+
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const pageWidth = 210;   // A4 width in mm
+  const pageHeight = 297;  // A4 height in mm
+
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+  let y = 0;
+  let remainingHeight = imgHeight;
+
+  const imgData = canvas.toDataURL("image/png");
+
+  pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+  remainingHeight -= pageHeight;
+
+  while (remainingHeight > 0) {
+    pdf.addPage();
+    y -= pageHeight;
+    pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+    remainingHeight -= pageHeight;
+  }
+
+  pdf.save("wongoji-paper.pdf");
+}
+
+
 
 
