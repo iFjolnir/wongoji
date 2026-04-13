@@ -22,7 +22,7 @@ const DEFAULTS = {
   forbidTypedSpaceAfter: new Set([".", ",", ":", ";"]),
 
   // punctuation that can share the last box if it would otherwise wrap
-  shareablePunct: new Set([".", ",", "?", "!", ":", ";", "…", ")", "]", "”", "’", "」", "』", "》"]),
+  shareablePunct: new Set([".", ",", "?", "!", ":", ";", "…", ")", "]", "”", "’", "\"", "'", "」", "』", "》"]),
 
   // special 2-box tokens (non-ellipsis only)
   twoBoxTokens: new Set(["―"]),
@@ -68,6 +68,19 @@ function tokenizeParagraph(para) {
       tokens.push("...");
       tokens.push("...");
       i += 2;
+      continue;
+    }
+
+    // Normalize curly quotes → straight (Word/Docs autocorrect produces curly)
+    const ch = para[i];
+    if (ch === "\u2018" || ch === "\u2019") {  // ‘ ’
+      tokens.push("'");
+      i += 1;
+      continue;
+    }
+    if (ch === "\u201C" || ch === "\u201D") {  // “ ”
+      tokens.push('"');
+      i += 1;
       continue;
     }
 
@@ -125,6 +138,54 @@ function packClusters(tokens, perBox = 2) {
   return out;
 }
 
+
+// Tag each token with a "quote role" — "open", "close", or null.
+// Runs on the POST-packClusters token stream, so token indices align with placement.
+//
+// Strategy:
+//   • Parity counter per quote type (' and "). First occurrence = open,
+//     second = close, third = open, ...
+//   • Apostrophe guard for singles ('): if the quote is sandwiched BETWEEN
+//     two alphanumeric-ish tokens (e.g. don't, it's), it's treated as an
+//     apostrophe — role stays null, parity is NOT flipped. This keeps
+//     contractions from misfiring the closing-quote merge.
+//   • Letter-on-left-only (e.g. students', 'cat') is NOT enough to trigger
+//     the guard, because that case is ambiguous with legitimate closing
+//     quotes. Parity is the best signal we have there.
+//   • Double quotes (") don't get the guard — they're almost never
+//     apostrophes in prose.
+function tagQuoteRoles(tokens) {
+  const roles = new Array(tokens.length).fill(null);
+  let singleParity = 0; // 0 = next is open, 1 = next is close
+  let doubleParity = 0;
+
+  const isAlphaNumericish = (t) => {
+    if (!t) return false;
+    const c = t[0];
+    return /^[A-Za-z0-9]$/.test(c);
+  };
+
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+
+    if (t === "'") {
+      const prev = i > 0 ? tokens[i - 1] : null;
+      const next = i + 1 < tokens.length ? tokens[i + 1] : null;
+      // Only guard when sandwiched between alphanumerics — that's an apostrophe.
+      if (isAlphaNumericish(prev) && isAlphaNumericish(next)) {
+        continue; // leave role null, don't flip parity
+      }
+      roles[i] = singleParity === 0 ? "open" : "close";
+      singleParity = 1 - singleParity;
+    } else if (t === '"') {
+      roles[i] = doubleParity === 0 ? "open" : "close";
+      doubleParity = 1 - doubleParity;
+    }
+  }
+
+  return roles;
+}
+
 function makeCell(char = "", used = false) {
   return { char, used };
 }
@@ -178,7 +239,7 @@ function layout(text, opts = {}) {
     return false;
   }
 
-  function placeToken(token, nextToken) {
+  function placeToken(token, nextToken, role) {
     // ignore typed spaces if we don't count them
     if (token === " " || token === "\t") {
       if (!countSpaces) return;
@@ -188,6 +249,46 @@ function layout(text, opts = {}) {
 
       pushUsedBlank();
       return;
+    }
+
+    // Korean wongonji rule: a closing quote and an adjacent period/comma
+    // share a single cell. This applies in BOTH directions:
+    //   (a) period/comma placed first, then closing quote arrives → merge fwd
+    //   (b) closing quote placed first, then period/comma arrives → merge back
+    //
+    // Case (a): closing quote arriving
+    if (role === "close") {
+      for (let i = cells.length - 1; i >= 0; i--) {
+        if (cells[i].used) {
+          const prev = cells[i].char || "";
+          if (prev === "." || prev === ",") {
+            cells[i].char = prev + token;
+            cells[i].isClosingQuoteMerged = true;
+            return;
+          }
+          break;
+        }
+      }
+      // no merge — place normally, but mark so a trailing period/comma
+      // can merge backward into this cell
+      pushCell({ char: token, used: true, isClosingQuote: true });
+      return;
+    }
+
+    // Case (b): period or comma arriving after a closing quote
+    if (token === "." || token === ",") {
+      for (let i = cells.length - 1; i >= 0; i--) {
+        if (cells[i].used) {
+          if (cells[i].isClosingQuote && !cells[i].isClosingQuoteMerged) {
+            // canonical order: punctuation first, then quote (e.g. '," or ".)
+            cells[i].char = token + (cells[i].char || "");
+            cells[i].isClosingQuoteMerged = true;
+            return;
+          }
+          break;
+        }
+      }
+      // fall through to normal placement
     }
 
     // 2-box tokens
@@ -240,18 +341,22 @@ if (o.requireBlankAfter.has(token)) {
     let tokens = tokenizeParagraph(para);
     tokens = packClusters(tokens, o.digitsPerBox);
 
+    // tag quote roles (open/close) for the closing-quote + period/comma merge
+    const roles = tagQuoteRoles(tokens);
+
     for (let i = 0; i < tokens.length; i++) {
       const t = tokens[i];
       const next = tokens[i + 1];
+      const role = roles[i];
 
       // If user typed a space after punctuation that shouldn't create extra blanks, skip it
       if (o.forbidTypedSpaceAfter.has(t) && (next === " " || next === "\t")) {
-        placeToken(t, next);
+        placeToken(t, next, role);
         i += 1;
         continue;
       }
 
-      placeToken(t, next);
+      placeToken(t, next, role);
     }
 
     // After paragraph (except last), force new line
