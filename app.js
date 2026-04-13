@@ -79,27 +79,49 @@ function tokenizeParagraph(para) {
 }
 
 
-function packDigits(tokens, digitsPerBox = 2) {
+// Classify a single-char token for clustering purposes.
+// Digits and lowercase Latin letters cluster 2-per-box, but only WITHIN
+// their own class — a digit run and a letter run touching each other
+// do NOT merge (e.g. "A1B2" → |A|1|B|2|, "SNS2024" → |SN|S|20|24|).
+// Uppercase Latin letters do NOT cluster: they take one box each, like Hangul.
+function clusterClass(t) {
+  if (t.length !== 1) return null;
+  if (/^[0-9]$/.test(t)) return "digit";
+  if (/^[a-z]$/.test(t)) return "lower";
+  return null; // everything else (uppercase, Hangul, punct, etc.) is non-clustering
+}
+
+function packClusters(tokens, perBox = 2) {
   const out = [];
-  let digitBuf = "";
+  let buf = "";
+  let bufClass = null;
+
+  const flush = () => {
+    if (buf.length > 0) {
+      out.push(buf);
+      buf = "";
+      bufClass = null;
+    }
+  };
 
   for (const t of tokens) {
-    if (/^[0-9]$/.test(t)) {
-      digitBuf += t;
-      if (digitBuf.length === digitsPerBox) {
-        out.push(digitBuf);
-        digitBuf = "";
-      }
+    const cls = clusterClass(t);
+
+    if (cls !== null) {
+      // class change → flush whatever we were building
+      if (cls !== bufClass) flush();
+
+      buf += t;
+      bufClass = cls;
+
+      if (buf.length === perBox) flush();
     } else {
-      if (digitBuf.length > 0) {
-        out.push(digitBuf);
-        digitBuf = "";
-      }
+      flush();
       out.push(t);
     }
   }
 
-  if (digitBuf.length > 0) out.push(digitBuf);
+  flush();
   return out;
 }
 
@@ -214,9 +236,9 @@ if (o.requireBlankAfter.has(token)) {
       for (let i = 0; i < indentBoxes; i++) pushUsedBlank();
     }
 
-    // tokenize + digit packing
+    // tokenize + cluster packing (digits and lowercase letters, 2 per box)
     let tokens = tokenizeParagraph(para);
-    tokens = packDigits(tokens, o.digitsPerBox);
+    tokens = packClusters(tokens, o.digitsPerBox);
 
     for (let i = 0; i < tokens.length; i++) {
       const t = tokens[i];
@@ -628,7 +650,3 @@ function exportCanvasToPdf(canvas) {
 
   pdf.save("wongoji-paper.pdf");
 }
-
-
-
-
