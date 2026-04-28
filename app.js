@@ -1,4 +1,4 @@
-// app.js — Wongoji Simulator (with page counter on multi-page exports)
+// app.js — Wongoji Simulator (Fixed: line-based pagination, compact header, conditional footer)
 
 /* =========================
    DEFAULTS + HELPERS
@@ -422,7 +422,7 @@ maxInput.addEventListener("input", updatePreview);
 updatePreview();
 
 /* =========================
-   EXPORT — WITH PAGE COUNTER
+   EXPORT
    ========================= */
 
 const exportImageBtn = document.querySelector("#export-image");
@@ -522,7 +522,7 @@ function buildExportWrapper() {
   return wrapper;
 }
 
-// PDF EXPORT — fixed footer using absolute positioning
+// PDF EXPORT — line-based pagination, compact header, conditional footer
 async function exportToPdf() {
   const wrapper = buildExportWrapper();
   if (!wrapper) return;
@@ -546,14 +546,37 @@ async function exportToPdf() {
     const rowCount = rows.length;
     const rowElements = Array.from(rows);
     
-    // Calculate how many rows fit per page (400 chars = 20 rows for 20-col, 16 rows for 25-col)
-    const charsPerPage = 400;
-    const rowsPerPage = Math.floor(charsPerPage / currentColumns);
+    // LINE-BASED PAGINATION (not character-based)
+    const totalLines = rowCount;
     
-    // Calculate total number of pages
+    // Pagination thresholds
+    const MAX_SINGLE_PAGE_LINES_WITH_HEADER = 25;
+    const MAX_SINGLE_PAGE_LINES_NO_HEADER = 28;
+    const LINES_PER_PAGE_PAGINATED_WITH_HEADER = 20;
+    const LINES_PER_PAGE_PAGINATED_NO_HEADER = 23;
+    
+    let rowsPerPage;
+    let isPaginated = false;
+    
+    if (hasHeader) {
+      if (totalLines <= MAX_SINGLE_PAGE_LINES_WITH_HEADER) {
+        rowsPerPage = totalLines;
+      } else {
+        rowsPerPage = LINES_PER_PAGE_PAGINATED_WITH_HEADER;
+        isPaginated = true;
+      }
+    } else {
+      if (totalLines <= MAX_SINGLE_PAGE_LINES_NO_HEADER) {
+        rowsPerPage = totalLines;
+      } else {
+        rowsPerPage = LINES_PER_PAGE_PAGINATED_NO_HEADER;
+        isPaginated = true;
+      }
+    }
+    
     const totalPages = Math.ceil(rowCount / rowsPerPage);
     
-    console.log(`Rows per page: ${rowsPerPage}, Total rows: ${rowCount}, Total pages: ${totalPages}`);
+    console.log(`Total lines: ${totalLines}, Has header: ${hasHeader}, Paginated: ${isPaginated}, Rows per page: ${rowsPerPage}, Total pages: ${totalPages}`);
     
     const pdf = new jsPDF({
       orientation: "portrait",
@@ -565,11 +588,9 @@ async function exportToPdf() {
     
     // Helper: Create a complete page container with fixed footer
     async function renderPage(rowsForPage, pageNumber, totalPages) {
-      // Create a wrapper with fixed dimensions (A4 size at 2x scale)
-      const wrapperWidth = 1240;  // pixels
-      const wrapperHeight = 1754;  // ~A4 height at 2x scale (297mm ≈ 1754px at 150dpi)
+      const wrapperWidth = 1240;
+      const wrapperHeight = 1754;
       
-      // Create main container with explicit height
       const pageContainer = document.createElement("div");
       pageContainer.style.width = `${wrapperWidth}px`;
       pageContainer.style.height = `${wrapperHeight}px`;
@@ -578,67 +599,41 @@ async function exportToPdf() {
       pageContainer.style.boxSizing = "border-box";
       pageContainer.style.overflow = "hidden";
       
-      // === HEADER SECTION (pinned to top) ===
+      // === HEADER SECTION (single-line: bold title left, name — date right) ===
       if (hasHeader) {
         const headerDiv = document.createElement("div");
         headerDiv.style.position = "absolute";
         headerDiv.style.top = "0";
         headerDiv.style.left = "0";
         headerDiv.style.right = "0";
-        headerDiv.style.padding = "32px 32px 40px 32px";
+        headerDiv.style.padding = "12px 32px 8px 32px";
         headerDiv.style.backgroundColor = "#fff";
+        headerDiv.style.display = "flex";
+        headerDiv.style.justifyContent = "space-between";
+        headerDiv.style.alignItems = "baseline";
         
-        // Title on left
-        const topRow = document.createElement("div");
-        topRow.style.display = "flex";
-        topRow.style.justifyContent = "space-between";
-        topRow.style.alignItems = "flex-start";
+        const titleEl = document.createElement("div");
+        titleEl.style.fontSize = "20px";
+        titleEl.style.fontWeight = "700";
+        titleEl.textContent = title || "";
+        headerDiv.appendChild(titleEl);
         
-        if (title) {
-          const titleEl = document.createElement("div");
-          titleEl.style.fontSize = "24px";
-          titleEl.style.fontWeight = "700";
-          titleEl.textContent = title;
-          topRow.appendChild(titleEl);
-        } else {
-          topRow.appendChild(document.createElement("div"));
-        }
-        
-        // Name and Date stacked on right
         if (name || date) {
-          const rightStack = document.createElement("div");
-          rightStack.style.textAlign = "right";
-          
-          if (name) {
-            const nameEl = document.createElement("div");
-            nameEl.style.fontSize = "14px";
-            nameEl.style.fontWeight = "400";
-            nameEl.style.color = "#555";
-            nameEl.style.marginBottom = "4px";
-            nameEl.textContent = name;
-            rightStack.appendChild(nameEl);
-          }
-          
-          if (date) {
-            const dateEl = document.createElement("div");
-            dateEl.style.fontSize = "14px";
-            dateEl.style.fontWeight = "400";
-            dateEl.style.color = "#555";
-            dateEl.textContent = date;
-            rightStack.appendChild(dateEl);
-          }
-          
-          topRow.appendChild(rightStack);
+          const rightEl = document.createElement("div");
+          rightEl.style.fontSize = "20px";
+          rightEl.style.fontWeight = "350";
+          rightEl.style.color = "#333";
+          const parts = [name, date].filter(Boolean);
+          rightEl.textContent = parts.join(" — ");
+          headerDiv.appendChild(rightEl);
         }
         
-        headerDiv.appendChild(topRow);
         pageContainer.appendChild(headerDiv);
       }
       
-      // === GRID SECTION (scrollable content area) ===
-      // Calculate start position (after header)
-      const headerHeightPx = hasHeader ? 140 : 32;
-      const footerHeightPx = 80;
+      // === GRID SECTION ===
+      const headerHeightPx = hasHeader ? 60 : 20;  // Compact to fit 25 rows
+      const footerHeightPx = (totalPages > 1) ? 60 : 0;
       
       const gridContainer = document.createElement("div");
       gridContainer.style.position = "absolute";
@@ -666,31 +661,31 @@ async function exportToPdf() {
       gridContainer.appendChild(newPaperInner);
       pageContainer.appendChild(gridContainer);
       
-      // === FOOTER SECTION (pinned to bottom) ===
-      const footerDiv = document.createElement("div");
-      footerDiv.style.position = "absolute";
-      footerDiv.style.bottom = "0";
-      footerDiv.style.left = "0";
-      footerDiv.style.right = "0";
-      footerDiv.style.backgroundColor = "#fff";
-      footerDiv.style.textAlign = "center";
-      footerDiv.style.padding = "24px 32px";
-      footerDiv.style.height = `${footerHeightPx}px`;
-      footerDiv.style.display = "flex";
-      footerDiv.style.alignItems = "center";
-      footerDiv.style.justifyContent = "center";
-      
+      // === FOOTER SECTION (only for multi-page) ===
       if (totalPages > 1) {
+        const footerDiv = document.createElement("div");
+        footerDiv.style.position = "absolute";
+        footerDiv.style.bottom = "0";
+        footerDiv.style.left = "0";
+        footerDiv.style.right = "0";
+        footerDiv.style.backgroundColor = "#fff";
+        footerDiv.style.textAlign = "center";
+        footerDiv.style.padding = "12px 32px";
+        footerDiv.style.height = `${footerHeightPx}px`;
+        footerDiv.style.display = "flex";
+        footerDiv.style.alignItems = "center";
+        footerDiv.style.justifyContent = "center";
+        
         const pageCounter = document.createElement("div");
-        pageCounter.style.fontSize = "12px";
+        pageCounter.style.fontSize = "11px";
         pageCounter.style.fontWeight = "400";
         pageCounter.style.color = "#999";
         pageCounter.style.letterSpacing = "1px";
         pageCounter.innerHTML = `—— ${pageNumber}/${totalPages} ——`;
         footerDiv.appendChild(pageCounter);
+        
+        pageContainer.appendChild(footerDiv);
       }
-      
-      pageContainer.appendChild(footerDiv);
       
       // Apply grid styling
       const styleTag = document.createElement("style");
@@ -711,6 +706,7 @@ async function exportToPdf() {
           border-bottom: ${EXPORT_BORDER_WIDTH_PX}px solid ${EXPORT_BORDER_COLOR} !important;
         }
         .paper-row.gutter {
+          height: 8px !important;
           border-top: ${EXPORT_BORDER_WIDTH_PX}px solid ${EXPORT_BORDER_COLOR} !important;
           border-left: ${EXPORT_BORDER_WIDTH_PX}px solid ${EXPORT_BORDER_COLOR} !important;
           border-right: ${EXPORT_BORDER_WIDTH_PX}px solid ${EXPORT_BORDER_COLOR} !important;
@@ -722,7 +718,6 @@ async function exportToPdf() {
       `;
       pageContainer.appendChild(styleTag);
       
-      // Render to canvas
       pageContainer.style.position = "fixed";
       pageContainer.style.left = "-9999px";
       pageContainer.style.top = "0";
@@ -764,6 +759,7 @@ async function exportToPdf() {
     document.body.removeChild(wrapper);
   }
 }
+
 exportImageBtn.addEventListener("click", async () => {
   if (exportDetails && exportDetails.classList.contains("hidden")) {
     exportDetails.classList.remove("hidden");
